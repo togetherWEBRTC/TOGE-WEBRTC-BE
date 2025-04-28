@@ -1,0 +1,68 @@
+services:
+   mariadb:
+      image: mariadb:latest
+      container_name: webrtc_mariadb
+      restart: always
+      environment:
+         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+         MYSQL_DATABASE: ${MYSQL_DATABASE}
+         MYSQL_USER: ${MYSQL_USER}
+         MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      ports:
+         - "${DB_PORT}:3306"
+      volumes:
+         - mariadb_data:/var/lib/mysql
+      networks:
+         - app_network
+      command:
+         - --character-set-server=utf8mb4
+         - --collation-server=utf8mb4_unicode_ci
+
+   redis:
+      image: redis:latest
+      container_name: webrtc_redis
+      restart: always
+      ports:
+         - "${REDIS_PORT}:6379"
+      volumes:
+         - redis_data:/data
+      networks:
+         - app_network
+      command: redis-server --requirepass ${REDIS_PASSWORD}
+
+   phpmyadmin:
+      image: phpmyadmin:latest
+      container_name: webrtc_phpmyadmin
+      restart: always
+      ports:
+         - "${PHPMYADMIN_PORT:-8081}:80"
+      environment:
+         PMA_HOST: mariadb
+         PMA_PORT: 3306
+      depends_on:
+         - mariadb
+      networks:
+         - app_network
+
+   redisinsight:
+      image: redislabs/redisinsight:latest
+      container_name: webrtc_redisinsight
+      restart: always
+      ports:
+         - "5540:5540"
+      networks:
+         - app_network
+      volumes:
+         - redisinsight:/db
+
+volumes:
+   mariadb_data:
+      driver: local
+   redis_data:
+      driver: local
+   redisinsight:
+      driver: local
+
+networks:
+   app_network:
+      driver: bridge
