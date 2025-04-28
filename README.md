@@ -19,3 +19,5 @@
    localhost:5540/ # REDIS
    localhost:8081/ # PHPMYADMIN
    ```
+
+<small>_The Pokémon images used for profiles in this repository are copyright assets of The Pokémon Company. These images are sourced from the [PokeAPI/sprites](https://github.com/PokeAPI/sprites) repository and are used for informational and non-commercial purposes only._</small>
