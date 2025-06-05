@@ -15,6 +15,10 @@ export const callRouter = (io: Server, socket: Socket) => {
       callController.changeCameraState(io, socket, data, callback)
    })
 
+   socket.on(WebSocketEvents.CALL_NOTIFY_SCREEN_SHARE_OFF, (data: any, callback) => {
+      callController.notifyScreenShareOff(io, socket, data, callback)
+   })
+
    socket.on(WebSocketEvents.CALL_CHANGE_HAND_RAISED, (data: any, callback) => {
       callController.changeHandRaisedState(io, socket, data, callback)
    })

@@ -11,12 +11,24 @@ export const signalRouter = (io: Server, socket: Socket) => {
       signalController.sendOffer(socket, data, callback)
    })
 
+   socket.on(WebSocketEvents.SIGNAL_SEND_OFFER_SCREEN_SHARE, async (data: any, callback) => {
+      signalController.sendScreenShareOffer(socket, data, callback)
+   })
+
    socket.on(WebSocketEvents.SIGNAL_SEND_ANSWER, async (data: any, callback) => {
       signalController.sendAnswer(socket, data, callback)
    })
 
+   socket.on(WebSocketEvents.SIGNAL_SEND_ANSWER_SCREEN_SHARE, async (data: any, callback) => {
+      signalController.sendScreenShareAnswer(socket, data, callback)
+   })
+
    socket.on(WebSocketEvents.SIGNAL_SEND_ICE, async (data: any, callback) => {
       signalController.sendIce(socket, data, callback)
+   })
+
+   socket.on(WebSocketEvents.SIGNAL_SEND_ICE_SCREEN_SHARE, async (data: any, callback) => {
+      signalController.sendScreenShareIce(socket, data, callback)
    })
 
    socket.on(WebSocketEvents.RTC_READY, async (data: any, callback) => {

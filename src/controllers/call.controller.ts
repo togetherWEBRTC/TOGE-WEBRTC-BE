@@ -82,6 +82,30 @@ export default class SocketCallController {
       }
    }
 
+   //화면공유 종료 알림
+   public async notifyScreenShareOff(io: Server, socket: Socket, data: any, callback: Function): Promise<void> {
+      try {
+         const schema = z.object({
+            roomCode: z.string({ message: "roomCode is required" }),
+         })
+
+         const reqData = validateSocketData(schema, data)
+         await this.checkRoomExists(io, reqData.roomCode)
+
+         const userInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
+         await this.socketRoomService.checkIsUserInRoom(userInfo.userId, reqData.roomCode)
+
+         //본인 제외한 다른 유저들에게 call_notify_screen_share_off 알림
+         socket.to(reqData.roomCode).emit(WebSocketEvents.CALL_NOTIFY_SCREEN_SHARE_OFF, {
+            name: WebSocketEvents.CALL_NOTIFY_SCREEN_SHARE_OFF,
+            fromUserId: userInfo.userId,
+         })
+         callback(successSocketResponse())
+      } catch (error) {
+         callback(handleSocketError(error))
+      }
+   }
+
    //손들기 ON/OFF 상태 변경
    public async changeHandRaisedState(io: Server, socket: Socket, data: any, callback: Function): Promise<void> {
       try {

@@ -39,6 +39,35 @@ export default class SocketRoomController {
       }
    }
 
+   public async sendScreenShareOffer(socket: Socket, data: any, callback: Function): Promise<void> {
+      try {
+         const schema = z.object({
+            roomCode: z.string({ message: "roomCode is required" }),
+            toUserId: z.string({ message: "toUserId is required" }),
+            sdp: z.string({ message: "sdp is required" }),
+         })
+         const reqData = validateSocketData(schema, data)
+
+         const myInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
+
+         //룸 맴버 검증
+         await this.socketRoomService.checkIsUserInRoom(myInfo.userId, reqData.roomCode)
+         await this.socketRoomService.checkIsUserInRoom(reqData.toUserId, reqData.roomCode)
+
+         // 타겟유저에게 sdp 전달
+         const targetUserInfo = await this.connectionService.getSocketUserInfoByUserId(reqData.toUserId)
+         socket.to(targetUserInfo.socketId).emit(WebSocketEvents.SIGNAL_NOTIFY_OFFER_SCREEN_SHARE, {
+            name: WebSocketEvents.SIGNAL_NOTIFY_OFFER_SCREEN_SHARE,
+            fromUserId: myInfo.userId,
+            sdp: reqData.sdp,
+         })
+
+         callback(successSocketResponse())
+      } catch (error) {
+         callback(handleSocketError(error))
+      }
+   }
+
    public async sendAnswer(socket: Socket, data: any, callback: Function): Promise<void> {
       try {
          const schema = z.object({
@@ -58,6 +87,35 @@ export default class SocketRoomController {
          const targetUserInfo = await this.connectionService.getSocketUserInfoByUserId(reqData.toUserId)
          socket.to(targetUserInfo.socketId).emit(WebSocketEvents.SIGNAL_NOTIFY_ANSWER, {
             name: WebSocketEvents.SIGNAL_NOTIFY_ANSWER,
+            fromUserId: myInfo.userId,
+            sdp: reqData.sdp,
+         })
+
+         callback(successSocketResponse())
+      } catch (error) {
+         callback(handleSocketError(error))
+      }
+   }
+
+   public async sendScreenShareAnswer(socket: Socket, data: any, callback: Function): Promise<void> {
+      try {
+         const schema = z.object({
+            roomCode: z.string({ message: "roomCode is required" }),
+            toUserId: z.string({ message: "toUserId is required" }),
+            sdp: z.string({ message: "sdp is required" }),
+         })
+         const reqData = validateSocketData(schema, data)
+
+         const myInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
+
+         //룸 맴버 검증
+         await this.socketRoomService.checkIsUserInRoom(myInfo.userId, reqData.roomCode)
+         await this.socketRoomService.checkIsUserInRoom(reqData.toUserId, reqData.roomCode)
+
+         // 타겟유저에게 sdp 전달
+         const targetUserInfo = await this.connectionService.getSocketUserInfoByUserId(reqData.toUserId)
+         socket.to(targetUserInfo.socketId).emit(WebSocketEvents.SIGNAL_NOTIFY_ANSWER_SCREEN_SHARE, {
+            name: WebSocketEvents.SIGNAL_NOTIFY_ANSWER_SCREEN_SHARE,
             fromUserId: myInfo.userId,
             sdp: reqData.sdp,
          })
@@ -89,6 +147,39 @@ export default class SocketRoomController {
          const targetUserInfo = await this.connectionService.getSocketUserInfoByUserId(reqData.toUserId)
          socket.to(targetUserInfo.socketId).emit(WebSocketEvents.SIGNAL_NOTIFY_ICE, {
             name: WebSocketEvents.SIGNAL_NOTIFY_ICE,
+            fromUserId: myInfo.userId,
+            candidate: reqData.candidate,
+            sdpMid: reqData.sdpMid,
+            sdpMLineIndex: reqData.sdpMLineIndex,
+         })
+
+         callback(successSocketResponse())
+      } catch (error) {
+         callback(handleSocketError(error))
+      }
+   }
+
+   public async sendScreenShareIce(socket: Socket, data: any, callback: Function): Promise<void> {
+      try {
+         const schema = z.object({
+            roomCode: z.string({ message: "roomCode is required" }),
+            toUserId: z.string({ message: "toUserId is required" }),
+            candidate: z.string({ message: "candidate is required" }),
+            sdpMid: z.string({ message: "sdpMid is required" }),
+            sdpMLineIndex: z.number({ message: "sdpMLineIndex is required" }),
+         })
+         const reqData = validateSocketData(schema, data)
+
+         const myInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
+
+         //룸 맴버 검증
+         await this.socketRoomService.checkIsUserInRoom(myInfo.userId, reqData.roomCode)
+         await this.socketRoomService.checkIsUserInRoom(reqData.toUserId, reqData.roomCode)
+
+         // 타겟유저에게 candidate 전달
+         const targetUserInfo = await this.connectionService.getSocketUserInfoByUserId(reqData.toUserId)
+         socket.to(targetUserInfo.socketId).emit(WebSocketEvents.SIGNAL_NOTIFY_ICE_SCREEN_SHARE, {
+            name: WebSocketEvents.SIGNAL_NOTIFY_ICE_SCREEN_SHARE,
             fromUserId: myInfo.userId,
             candidate: reqData.candidate,
             sdpMid: reqData.sdpMid,

@@ -15,7 +15,7 @@ export const ResCode = {
    FAILED_LOGIN: { code: 1003, message: "failed login" },
    DUPLICATED_ID: { code: 1004, message: "duplicated id" },
    PASSWORD_NOT_MATCH: { code: 1005, message: "password not match" },
-   
+
    // SOCKET ROOM
    ALREADY_JOINED_ROOM: { code: 10001, message: "already joined room" },
    ROOM_NOT_FOUND: { code: 10002, message: "room not found" },
@@ -57,10 +57,19 @@ export const WebSocketEvents = {
    SIGNAL_NOTIFY_ICE: "signal_notify_ice", // candidate 전달되었다는 알림
    RTC_READY: "rtc_ready",
 
+   // 화면 공유 시그널링
+   SIGNAL_SEND_OFFER_SCREEN_SHARE: "signal_send_offer_screen_share", // offer 전송
+   SIGNAL_NOTIFY_OFFER_SCREEN_SHARE: "signal_notify_offer_screen_share", // offer 전달되었다는 알림
+   SIGNAL_SEND_ANSWER_SCREEN_SHARE: "signal_send_answer_screen_share", // answer 전송
+   SIGNAL_NOTIFY_ANSWER_SCREEN_SHARE: "signal_notify_answer_screen_share", // answer 전달되었다는 알림
+   SIGNAL_SEND_ICE_SCREEN_SHARE: "signal_send_ice_screen_share", // candidate 전송
+   SIGNAL_NOTIFY_ICE_SCREEN_SHARE: "signal_notify_ice_screen_share", // candidate 전달되었다는 알림
+
    CALL_CHANGE_MIC: "call_change_mic", // 마이크 on/off
    CALL_NOTIFY_CHANGE_MIC: "call_notify_change_mic", // 마이크 on/off 알림
    CALL_CHANGE_CAMERA: "call_change_camera", // 카메라 on/off
    CALL_NOTIFY_CHANGE_CAMERA: "call_notify_change_camera", // 카메라 on/off 알림
+   CALL_NOTIFY_SCREEN_SHARE_OFF: "call_notify_screen_share_off", // 화면공유 종료 알림
 
    CALL_CHANGE_HAND_RAISED: "call_change_hand_raised", // 손들기 on/off
    CALL_NOTIFY_CHANGE_HAND_RAISED: "call_notify_change_hand_raised", // 손들기 on/off 알림
