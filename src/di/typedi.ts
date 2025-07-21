@@ -77,3 +77,4 @@ export default () => {
       console.error("⭐️ Error during dependency injection:", err)
    }
 }
+// test
