@@ -68,7 +68,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))
    .use(express.urlencoded({ extended: true, limit: "10mb" }))
    .use(
       cors({
-         origin: ["http://localhost:5173", "http://192.168.0.27:5173"],
+         origin: process.env.CLIENT_URL,
          credentials: true,
       })
    )
