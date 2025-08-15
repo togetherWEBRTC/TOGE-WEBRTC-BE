@@ -123,6 +123,15 @@ export class AuthService {
       }
    }
 
+   // 회원 탈퇴
+   async withdraw(userId: string): Promise<boolean> {
+      const isDeleted = await this.accountRepository.deleteAccount(userId)
+      if (!isDeleted) {
+         throw new ResError({ code: ResCode.USER_NOT_FOUND_OR_DELETED.code, message: ResCode.USER_NOT_FOUND_OR_DELETED.message })
+      }
+      return true
+   }
+
    /**
     * 동일한 패스워드 검사
     * @param givenPassword 주어진 패스워드

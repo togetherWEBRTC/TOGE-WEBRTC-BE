@@ -9,4 +9,5 @@ export interface IAccountRepository {
    findByNickname(nickname: string): Promise<AccountDAO | null>
    isAccountExists(whereData: Partial<Omit<AccountDAO, "createdAt" | "updatedAt">>): Promise<boolean>
    modifyProfileImage(userId: string): Promise<Boolean>
+   deleteAccount(userId: string): Promise<boolean>
 }

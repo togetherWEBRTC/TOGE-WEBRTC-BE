@@ -15,6 +15,7 @@ export const ResCode = {
    FAILED_LOGIN: { code: 1003, message: "failed login" },
    DUPLICATED_ID: { code: 1004, message: "duplicated id" },
    PASSWORD_NOT_MATCH: { code: 1005, message: "password not match" },
+   USER_NOT_FOUND_OR_DELETED: { code: 1006, message: "user not found or already deleted" },
 
    // SOCKET ROOM
    ALREADY_JOINED_ROOM: { code: 10001, message: "already joined room" },

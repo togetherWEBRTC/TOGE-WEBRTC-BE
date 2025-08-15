@@ -76,6 +76,15 @@ export class AccountRepository implements IAccountRepository {
       return true
    }
 
+   // withdraw
+   public async deleteAccount(userId: string): Promise<boolean> {
+      const deletedCount = await AccountDAO.destroy({
+         where: { userId },
+         force: true,
+      })
+      return deletedCount > 0
+   }
+
    /**
     * 동일한 패스워드 검사
     * @param givenPassword 주어진 패스워드

@@ -41,4 +41,9 @@ router.post("/modify/profile-image", validateBearerAuthorization, verifyAccessTo
    return authController.modifyProfileImage(req, res)
 })
 
+router.delete("/withdraw", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.withdraw(req, res)
+})
+
 export default router

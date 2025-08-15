@@ -127,4 +127,26 @@ export default class AuthController {
          handleError(res, error)
       }
    }
+
+   public withdraw = async (req: Request, res: Response): Promise<void> => {
+      try {
+         if (!req.tokenPayload) {
+            throw new ResError({ code: ResCode.INVALID_PARAMS.code, message: "token data is invalid" })
+         }
+         const userId = req.tokenPayload.userId
+         await this.authService.withdraw(userId)
+
+         res.clearCookie("refreshToken", {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: false,
+            path: "/",
+            domain: process.env.FRONT_URL,
+         })
+
+         successResponse(res, ResCode.SUCCESS.message)
+      } catch (error: any) {
+         handleError(res, error)
+      }
+   }
 }
