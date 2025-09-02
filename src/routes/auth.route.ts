@@ -11,9 +11,19 @@ router.post("/signup", async (req, res) => {
    return authController.signup(req, res)
 })
 
+router.post("/social-signup", async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.socialSignUp(req, res)
+})
+
 router.post("/login", async (req, res) => {
    const authController = Container.get<AuthController>(DependencyKeys.AuthController)
    return authController.login(req, res)
+})
+
+router.post("/social-login", async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.socialLogin(req, res)
 })
 
 router.post("/logout", async (req, res) => {
@@ -41,9 +51,19 @@ router.post("/modify/profile-image", validateBearerAuthorization, verifyAccessTo
    return authController.modifyProfileImage(req, res)
 })
 
+router.post("/modify/nickname", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.modifyNickname(req, res)
+})
+
 router.delete("/withdraw", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
    const authController = Container.get<AuthController>(DependencyKeys.AuthController)
    return authController.withdraw(req, res)
+})
+
+router.delete("/social-withdraw", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.socialWithdraw(req, res)
 })
 
 export default router

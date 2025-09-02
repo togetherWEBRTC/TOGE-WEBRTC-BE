@@ -16,6 +16,13 @@ export const ResCode = {
    DUPLICATED_ID: { code: 1004, message: "duplicated id" },
    PASSWORD_NOT_MATCH: { code: 1005, message: "password not match" },
    USER_NOT_FOUND_OR_DELETED: { code: 1006, message: "user not found or already deleted" },
+   FAIL_SOCIAL_LOGIN_INVAILD_INFO: { code: 1007, message: "can not get social info" },
+   FAIL_SOCIAL_LOGIN: { code: 1008, message: "failed login" },
+   INVAILD_SOCIAL_SIGNUP_TOKEN: { code: 1009, message: "invaild social signup token" },
+   NEED_TO_ADDITIONAL_TERMS: { code: 1010, message: "need to agree terms" },
+   NEED_TO_AGREED_TERMS: { code: 1011, message: "need to agree terms" },
+   FAIL_WITHDRAW_MEMBER: { code: 1012, message: "failed withdraw member" },
+   FAIL_MODIFY_NICKNAME: { code: 1013, message: "failed modify nickname" },
 
    // SOCKET ROOM
    ALREADY_JOINED_ROOM: { code: 10001, message: "already joined room" },
@@ -84,11 +91,15 @@ export const WebSocketEvents = {
 export class ResError extends Error {
    code: number
    message: string
+   data?: any
 
-   constructor(p: { code: number; message: string }) {
+   constructor(p: { code: number; message: string; data?: any }) {
       super(p.message)
       this.code = p.code
       this.message = p.message
+      if (p.data) {
+         this.data = p.data
+      }
    }
 }
 

@@ -1,9 +1,11 @@
 import { TokenPair, TokenType } from "@type/token.types"
-import { UserInfo } from "@type/user.info.type"
+import { UserInfo, SocialType, SocialUserInfo } from "@type/user.info.type"
 import { ResError, ResCode } from "@type/response.types"
 import { JWTService } from "@services/token.service"
 import bcrypt from "bcrypt"
 import { IAccountRepository } from "@repositorys/account.i.repository"
+import { getRandomStringLength, getRandomNickname } from "@utils/string.util"
+import { AccountDto } from "@models/dto.accounts"
 
 export class AuthService {
    constructor(private readonly accountRepository: IAccountRepository, private readonly tokenService: JWTService) {}
@@ -71,6 +73,93 @@ export class AuthService {
       }
    }
 
+   public async socialLogin(token: string, type: SocialType): Promise<[UserInfo, TokenPair]> {
+      const socialUserInfo = await this.accountRepository.getGoogleToken(token)
+
+      const accountExists = await this.accountRepository.isAccountExists({ socialId: socialUserInfo.subId })
+      if (accountExists) {
+         // 이미 가입된 유저 -> 로그인 처리
+         const account = await this.accountRepository.findOneAccount({ socialId: socialUserInfo.subId })
+         return this.handleLogin(account)
+      } else {
+         // 신규유저 약관필요 - 토큰하고 같이 클라로 다시 전달
+         const socialToken = await this.tokenService.getSocialToken({ subId: socialUserInfo.subId, email: socialUserInfo.email, type: SocialType[type] }, TokenType.ACCESS)
+         throw new ResError({
+            code: ResCode.NEED_TO_ADDITIONAL_TERMS.code,
+            message: ResCode.NEED_TO_ADDITIONAL_TERMS.message,
+            data: socialToken,
+         })
+      }
+   }
+
+   /**
+    * 기존 유저의 로그인 처리를
+    * @param account - DB에서 조회한 기존 유저의 DTO
+    * @returns [UserInfo, TokenPair]
+    */
+   private async handleLogin(account: AccountDto): Promise<[UserInfo, TokenPair]> {
+      const tokenPair = await this.tokenService.getTokenPair({
+         userId: account.userId,
+         nickname: account.nickname,
+         profileUrl: account.profileUrl,
+      })
+
+      await this.accountRepository.updateAccount(account.uid, account.userId, {
+         refreshToken: tokenPair.refreshToken,
+      })
+
+      const userInfo: UserInfo = {
+         userId: account.userId,
+         name: account.nickname,
+         profileUrl: account.profileUrl,
+      }
+
+      return [userInfo, tokenPair]
+   }
+
+   public async socialSignUp(token: string, nickname: string, isAgreedTerms: boolean, isAgreedPrivacy: boolean): Promise<[UserInfo, TokenPair]> {
+      //토큰검증
+      //정보반환
+      const socialUserInfo = await this.tokenService.decodeSocialToken(token, TokenType.ACCESS)
+
+      // 유저아이디 생성(소셜아이디아님)
+      let userId: string
+      do {
+         userId = await getRandomStringLength(10)
+      } while (await this.accountRepository.isAccountExists({ userId }))
+
+      const profileUrl = `profile/${Math.floor(Math.random() * 58) + 1}.png`
+
+      const tokenPair = await this.tokenService.getTokenPair({
+         userId: userId,
+         nickname: nickname,
+         profileUrl: profileUrl,
+      })
+
+      const newUserInfo = await this.accountRepository.createSocialAccount({
+         userId: userId,
+         nickname: nickname,
+         email: socialUserInfo.email,
+         socialId: socialUserInfo.subId,
+         socialType: socialUserInfo.type,
+         refreshToken: tokenPair.refreshToken,
+         termsAgreed: isAgreedTerms,
+         privacyAgreed: isAgreedPrivacy,
+      })
+
+      return [newUserInfo, tokenPair]
+   }
+
+   public async updateNickname(userId: string, newNickname: string): Promise<boolean> {
+      const isSuccess = await this.accountRepository.updateAccountInfo(userId, { nickname: newNickname })
+
+      if (!isSuccess) {
+         throw new ResError({ code: ResCode.FAIL_MODIFY_NICKNAME.code, message: ResCode.FAIL_MODIFY_NICKNAME.message })
+      }
+
+      return true
+   }
+
    /**
     * 1. refreshToken 검사 및 decode
     * 2. db에 refreshToken 검사
@@ -126,6 +215,15 @@ export class AuthService {
    // 회원 탈퇴
    async withdraw(userId: string): Promise<boolean> {
       const isDeleted = await this.accountRepository.deleteAccount(userId)
+      if (!isDeleted) {
+         throw new ResError({ code: ResCode.USER_NOT_FOUND_OR_DELETED.code, message: ResCode.USER_NOT_FOUND_OR_DELETED.message })
+      }
+      return true
+   }
+
+   // 소셜 회원탈퇴
+   async deleteSocialWithdraw(userId: string): Promise<boolean> {
+      const isDeleted = await this.accountRepository.deleteSocialAccount(userId)
       if (!isDeleted) {
          throw new ResError({ code: ResCode.USER_NOT_FOUND_OR_DELETED.code, message: ResCode.USER_NOT_FOUND_OR_DELETED.message })
       }

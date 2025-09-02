@@ -26,3 +26,13 @@ export type RoomParticipant = {
    isCameraOn: boolean
    isHandRaised: boolean
 }
+
+export type SocialUserInfo = {
+   subId: string
+   email: string
+   type: string
+}
+
+export enum SocialType {
+   GOOGLE,
+}

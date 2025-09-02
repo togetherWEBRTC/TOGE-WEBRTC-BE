@@ -35,7 +35,7 @@ export function handleError(res: Response, error: any): void {
             statusCode = 403 // Forbidden
             break
       }
-      errorResponse(res, error.code, error.message, statusCode)
+      errorResponse(res, error.code, error.message, statusCode, error.data)
    } else {
       errorResponse(res, ResCode.SERVER_ERROR.code, ResCode.SERVER_ERROR.message, statusCode)
    }

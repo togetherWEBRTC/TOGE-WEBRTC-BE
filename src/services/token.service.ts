@@ -2,6 +2,7 @@ import * as TokenTypes from "@type/token.types"
 import dotenv from "dotenv"
 import { ResError, ResCode } from "@type/response.types"
 import * as jose from "jose"
+import { SocialUserInfo } from "@type/user.info.type"
 
 export class JWTService {
    private readonly encoder = new TextEncoder()
@@ -16,6 +17,33 @@ export class JWTService {
       this.refreshTokenSecret = process.env.JWT_REFRESH_TOKEN_SECRET as string
       this.accessTokenExpiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN as string
       this.refreshTokenExpiresIn = process.env.JWT_REFRESH_TOKEN_EXPIRES_IN as string
+   }
+
+   public async getSocialToken(payload: { subId: string; email: string; type: string }, tokenType: TokenTypes.TokenType): Promise<String> {
+      const secret = this.getSecreteKey(tokenType)
+      const expiresIn = this.getExpiresIn(tokenType)
+      const encryptionKey = this.encoder.encode(secret)
+
+      return await new jose.SignJWT(payload)
+         .setProtectedHeader({ alg: process.env.JWT_ALGORITHM || "HS256" })
+         .setAudience([])
+         .setExpirationTime(expiresIn)
+         .setIssuedAt()
+         .sign(encryptionKey)
+   }
+
+   public async decodeSocialToken(token: string, tokenType: TokenTypes.TokenType): Promise<SocialUserInfo> {
+      try {
+         const encryptionKey = this.getEncryptionKey(tokenType)
+         const { payload } = await jose.jwtVerify(token, encryptionKey)
+         return {
+            subId: payload.subId as string,
+            email: payload.email as string,
+            type: payload.type as string,
+         }
+      } catch (error) {
+         throw new ResError({ code: ResCode.INVAILD_SOCIAL_SIGNUP_TOKEN.code, message: ResCode.INVAILD_SOCIAL_SIGNUP_TOKEN.message })
+      }
    }
 
    public async getTokenPair(payload: TokenTypes.TokenPayload): Promise<TokenTypes.TokenPair> {

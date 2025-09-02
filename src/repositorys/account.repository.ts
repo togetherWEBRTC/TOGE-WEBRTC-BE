@@ -1,14 +1,16 @@
 import { AccountDAO, UserStatus } from "@models/dao.accounts"
-import { UserInfo } from "@type/user.info.type"
+import { UserInfo, SocialUserInfo } from "@type/user.info.type"
 import bcrypt from "bcrypt"
 import dotenv from "dotenv"
 import { ResError, ResCode } from "@type/response.types"
 import { AccountDto } from "@models/dto.accounts"
 import { WhereOptions } from "sequelize"
+import sequelize from "@config/database"
 import { IAccountRepository } from "@repositorys/account.i.repository"
+import SocialGoogleDatasource from "@/network/social.google.datasource"
 
 export class AccountRepository implements IAccountRepository {
-   constructor() {
+   constructor(private readonly socialGoogleDatasource: SocialGoogleDatasource) {
       dotenv.config()
    }
 
@@ -33,6 +35,48 @@ export class AccountRepository implements IAccountRepository {
       return userInfo
    }
 
+   public async createSocialAccount({
+      userId,
+      nickname,
+      email,
+      socialId,
+      socialType,
+      refreshToken,
+      termsAgreed,
+      privacyAgreed,
+   }: {
+      userId: string
+      nickname: string
+      email: string
+      socialId: string
+      socialType: string
+      refreshToken: string
+      termsAgreed: boolean
+      privacyAgreed: boolean
+   }): Promise<UserInfo> {
+      const res = await AccountDAO.create({
+         userId: userId,
+         nickname: nickname,
+         password: "nouse",
+         email: email,
+         socialId: socialId,
+         socialType: socialType,
+         userStatus: UserStatus.ACTIVE,
+         profileUrl: this.getRandomProfileUrl(),
+         refreshToken: refreshToken,
+         termsAgreed: termsAgreed,
+         privacyAgreed: privacyAgreed,
+      } as any)
+
+      const userInfo: UserInfo = {
+         userId: res.dataValues.userId,
+         name: res.dataValues.nickname,
+         profileUrl: res.dataValues.profileUrl ?? "",
+      }
+
+      return userInfo
+   }
+
    // update query
    public async updateAccount(uid: number, userId: string, updateData: Partial<Omit<AccountDAO, "uid" | "userId" | "createdAt" | "updatedAt">>) {
       await AccountDAO.update(updateData, {
@@ -41,6 +85,16 @@ export class AccountRepository implements IAccountRepository {
             userId: userId,
          },
       })
+   }
+
+   // update query
+   public async updateAccountInfo(userId: string, updateData: Partial<Omit<AccountDAO, "uid" | "userId" | "createdAt" | "updatedAt">>): Promise<boolean> {
+      const [affectedCount] = await AccountDAO.update(updateData, {
+         where: {
+            userId: userId,
+         },
+      })
+      return affectedCount > 0
    }
 
    // findone query
@@ -85,6 +139,56 @@ export class AccountRepository implements IAccountRepository {
       return deletedCount > 0
    }
 
+   // social withdraw
+   public async deleteSocialAccount(userId: string): Promise<boolean> {
+      const account = await AccountDAO.findOne({
+         where: { userId, userStatus: UserStatus.ACTIVE },
+      })
+
+      if (!account) {
+         throw new ResError({ code: ResCode.USER_NOT_FOUND_OR_DELETED.code, message: ResCode.USER_NOT_FOUND_OR_DELETED.message })
+      }
+
+      const transaction = await sequelize.transaction()
+
+      try {
+         const deletionSuffix = `_deleted`
+         await AccountDAO.update(
+            {
+               userStatus: UserStatus.WITHDRAWN,
+               email: `${account.email}${deletionSuffix}`,
+               socialId: `${account.socialId}${deletionSuffix}`,
+               refreshToken: "",
+            },
+            {
+               where: { userId: userId },
+               transaction: transaction,
+            }
+         )
+
+         const deletedCount = await AccountDAO.destroy({
+            where: { userId: userId },
+            transaction: transaction,
+         })
+
+         await transaction.commit()
+
+         return deletedCount > 0
+      } catch (error) {
+         await transaction.rollback()
+         throw new ResError({
+            code: ResCode.FAIL_WITHDRAW_MEMBER.code,
+            message: ResCode.FAIL_WITHDRAW_MEMBER.message + " : " + error,
+         })
+      }
+   }
+
+   //google login
+   public async getGoogleToken(idToken: string): Promise<SocialUserInfo> {
+      const socialUserInfo = await this.socialGoogleDatasource.verifyIdToken(idToken)
+      return socialUserInfo
+   }
+
    /**
     * 동일한 패스워드 검사
     * @param givenPassword 주어진 패스워드
@@ -125,6 +229,6 @@ export class AccountRepository implements IAccountRepository {
     * @returns 랜덤 프로필 이미지 URL
     */
    private getRandomProfileUrl(): string {
-      return "profile/" + (Math.floor(Math.random() * 151) + 1) + ".png"
+      return "profile/" + (Math.floor(Math.random() * 58) + 1) + ".png"
    }
 }

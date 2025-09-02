@@ -84,3 +84,23 @@ app.use(
       },
    })
 )
+
+app.use(
+   "/privacy-policy.html",
+   express.static(path.join(__dirname, "public/privacy-policy.html"), {
+      maxAge: "7d",
+      setHeaders: (res, path) => {
+         res.setHeader("Cache-Control", "public, max-age=604800")
+      },
+   })
+)
+
+app.use(
+   "/term-of-service.html",
+   express.static(path.join(__dirname, "public/term-of-service.html"), {
+      maxAge: "7d",
+      setHeaders: (res, path) => {
+         res.setHeader("Cache-Control", "public, max-age=604800")
+      },
+   })
+)

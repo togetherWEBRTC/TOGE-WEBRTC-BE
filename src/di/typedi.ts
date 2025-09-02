@@ -12,6 +12,7 @@ import SignalController from "@controllers/signal.controller"
 import SocketCallController from "@controllers/call.controller"
 import SocketCallService from "@/services/socket.call.service"
 import RoomController from "@controllers/room.controller"
+import SocialGoogleDatasource from "@/network/social.google.datasource"
 
 export const DependencyKeys = {
    AccountRepository: "AccountRepository",
@@ -28,12 +29,16 @@ export const DependencyKeys = {
    SignalController: "SignalController",
    SocketCallController: "SocketCallController",
    SocketCallService: "SocketCallService",
+   SocialGoogleDatasource: "SocialGoogleDatasource",
 }
 
 export default () => {
    try {
+      const socialGoogleDatasource = new SocialGoogleDatasource()
+      Container.set(DependencyKeys.SocialGoogleDatasource, socialGoogleDatasource)
+
       // repository
-      const accountRepository = new AccountRepository()
+      const accountRepository = new AccountRepository(socialGoogleDatasource)
       Container.set(DependencyKeys.AccountRepository, accountRepository)
 
       const socketRepository = new SocketRepository()
