@@ -66,4 +66,9 @@ router.delete("/social-withdraw", validateBearerAuthorization, verifyAccessToken
    return authController.socialWithdraw(req, res)
 })
 
+router.post("/web-social-withdraw", async (req, res) => {
+   const authController = Container.get<AuthController>(DependencyKeys.AuthController)
+   return authController.webSocialWithDraw(req, res)
+})
+
 export default router

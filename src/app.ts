@@ -104,3 +104,7 @@ app.use(
       },
    })
 )
+
+app.get("/social-withdraw", (req, res) => {
+   res.sendFile(path.join(__dirname, "public", "social", "social-withdraw.html"))
+})

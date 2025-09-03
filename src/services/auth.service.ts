@@ -230,6 +230,25 @@ export class AuthService {
       return true
    }
 
+   // 구글스토어 웹 소셜탈퇴
+   public async webSocialWithdraw(token: string): Promise<boolean> {
+      const socialUserInfo = await this.accountRepository.getGoogleToken(token)
+      const accountExists = await this.accountRepository.isAccountExists({ socialId: socialUserInfo.subId })
+      // 회원탈퇴
+      if (accountExists) {
+         const account = await this.accountRepository.findOneAccount({ socialId: socialUserInfo.subId })
+
+         const isDeleted = await this.accountRepository.deleteSocialAccount(account.userId)
+
+         if (isDeleted) {
+            return true
+         }
+         return false
+      } else {
+         return false
+      }
+   }
+
    /**
     * 동일한 패스워드 검사
     * @param givenPassword 주어진 패스워드

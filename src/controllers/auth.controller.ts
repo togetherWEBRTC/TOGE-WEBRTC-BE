@@ -268,6 +268,24 @@ export default class AuthController {
       }
    }
 
+   public webSocialWithDraw = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const query = z.object({
+            idToken: z.string({ message: "idToken is required" }),
+         })
+         const data = validateQuery(query, req, res)
+
+         const result = await this.authService.webSocialWithdraw(data.idToken)
+         if (result) {
+            successResponse(res, ResCode.SUCCESS.message)
+         } else {
+            throw new ResError({ code: ResCode.FAIL_WITHDRAW_MEMBER.code, message: "FAIL_WITHDRAW_MEMBER" })
+         }
+      } catch (error: any) {
+         handleError(res, error)
+      }
+   }
+
    private returnSocialType(type: string): SocialType | null {
       if (type === "GOOGLE") {
          return SocialType.GOOGLE
