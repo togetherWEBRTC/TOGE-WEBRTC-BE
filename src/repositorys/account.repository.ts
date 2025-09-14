@@ -42,6 +42,7 @@ export class AccountRepository implements IAccountRepository {
       socialId,
       socialType,
       refreshToken,
+      profileUrl,
       termsAgreed,
       privacyAgreed,
    }: {
@@ -51,6 +52,7 @@ export class AccountRepository implements IAccountRepository {
       socialId: string
       socialType: string
       refreshToken: string
+      profileUrl: string
       termsAgreed: boolean
       privacyAgreed: boolean
    }): Promise<UserInfo> {
@@ -62,7 +64,7 @@ export class AccountRepository implements IAccountRepository {
          socialId: socialId,
          socialType: socialType,
          userStatus: UserStatus.ACTIVE,
-         profileUrl: this.getRandomProfileUrl(),
+         profileUrl: profileUrl,
          refreshToken: refreshToken,
          termsAgreed: termsAgreed,
          privacyAgreed: privacyAgreed,

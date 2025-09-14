@@ -1,4 +1,4 @@
-import { TokenPair, TokenType } from "@type/token.types"
+import { TokenPair, TokenType, TokenPayload } from "@type/token.types"
 import { UserInfo, SocialType, SocialUserInfo } from "@type/user.info.type"
 import { ResError, ResCode } from "@type/response.types"
 import { JWTService } from "@services/token.service"
@@ -6,6 +6,7 @@ import bcrypt from "bcrypt"
 import { IAccountRepository } from "@repositorys/account.i.repository"
 import { getRandomStringLength, getRandomNickname } from "@utils/string.util"
 import { AccountDto } from "@models/dto.accounts"
+import { AccountDAO } from "@/models/dao.accounts"
 
 export class AuthService {
    constructor(private readonly accountRepository: IAccountRepository, private readonly tokenService: JWTService) {}
@@ -143,6 +144,7 @@ export class AuthService {
          socialId: socialUserInfo.subId,
          socialType: socialUserInfo.type,
          refreshToken: tokenPair.refreshToken,
+         profileUrl: profileUrl,
          termsAgreed: isAgreedTerms,
          privacyAgreed: isAgreedPrivacy,
       })
@@ -177,10 +179,14 @@ export class AuthService {
             userId: tokenPayload.userId,
             refreshToken: refreshToken,
          })
-         console.log("accountDto  ⭐️: ", accountDto)
 
-         const accessToken = await this.tokenService.getNewToken(tokenPayload, TokenType.ACCESS)
-         console.log("accessToken  ⭐️: ", accessToken)
+         const newTokenPayload = {
+            userId: accountDto.userId,
+            nickname: accountDto.nickname,
+            profileUrl: accountDto.profileUrl,
+         } as TokenPayload
+
+         const accessToken = await this.tokenService.getNewToken(newTokenPayload, TokenType.ACCESS)
 
          return accessToken
       } catch (e) {
