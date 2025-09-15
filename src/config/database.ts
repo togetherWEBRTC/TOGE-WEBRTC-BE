@@ -1,5 +1,8 @@
 import { Sequelize } from "sequelize-typescript"
 import { AccountDAO } from "@/models/dao.accounts"
+import { BlockDAO } from "@models/dao.block"
+import { ReportDAO } from "@models/dao.report"
+import { CallSessionLogDAO } from "@models/dao.call.session.log"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -11,7 +14,7 @@ const sequelize = new Sequelize({
    username: process.env.MYSQL_USER,
    password: process.env.MYSQL_PASSWORD,
    database: process.env.MYSQL_DATABASE,
-   models: [AccountDAO],
+   models: [AccountDAO, BlockDAO, ReportDAO, CallSessionLogDAO],
    logging: console.log,
 })
 

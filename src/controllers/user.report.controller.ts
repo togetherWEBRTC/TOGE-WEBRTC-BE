@@ -1,0 +1,87 @@
+import { Request, Response } from "express"
+import UserReportService from "@services/user.report.service"
+import { successResponse, handleError } from "@utils/response.util"
+import { ResCode, ResError } from "@type/response.types"
+import { validateQuery } from "@utils/request.validation.util"
+import { z } from "zod"
+
+export default class UserReportController {
+   constructor(private readonly userReportService: UserReportService) {}
+
+   public blockUser = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const tokenPayload = req.tokenPayload
+         if (!tokenPayload) {
+            throw new ResError({ code: ResCode.INVAILD_ACCESS_TOKEN.code, message: "Token payload is missing" })
+         }
+
+         const query = z.object({
+            blockedUserId: z.string({ message: "blockedUserId is required" }),
+            reason: z.string().optional(),
+            comment: z.string().optional(),
+         })
+         const data = validateQuery(query, req, res)
+
+         const result = await this.userReportService.blockUser(tokenPayload.userId, data.blockedUserId, data.reason, data.comment)
+         successResponse(res, ResCode.SUCCESS.message, { blockInfo: result })
+      } catch (error) {
+         handleError(res, error)
+      }
+   }
+
+   public unblockUser = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const tokenPayload = req.tokenPayload
+         if (!tokenPayload) {
+            throw new ResError({ code: ResCode.INVAILD_ACCESS_TOKEN.code, message: "Token payload is missing" })
+         }
+
+         const query = z.object({
+            blockedUserId: z.string({ message: "blockedUserId is required" }),
+         })
+         const data = validateQuery(query, req, res)
+
+         await this.userReportService.unblockUser(tokenPayload.userId, data.blockedUserId)
+         successResponse(res, ResCode.SUCCESS.message)
+      } catch (error) {
+         handleError(res, error)
+      }
+   }
+
+   public getBlockedUsers = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const tokenPayload = req.tokenPayload
+         if (!tokenPayload) {
+            throw new ResError({ code: ResCode.INVAILD_ACCESS_TOKEN.code, message: "Token payload is missing" })
+         }
+
+         const blockedList = await this.userReportService.getBlockedUserList(tokenPayload.userId)
+         successResponse(res, ResCode.SUCCESS.message, { blockedUsers: blockedList })
+      } catch (error) {
+         handleError(res, error)
+      }
+   }
+
+   public reportUser = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const tokenPayload = req.tokenPayload
+         if (!tokenPayload) {
+            throw new ResError({ code: ResCode.INVAILD_ACCESS_TOKEN.code, message: "Token payload is missing" })
+         }
+
+         const query = z.object({
+            reportedUserId: z.string({ message: "reportedUserId is required" }),
+            reportTargetType: z.string({ message: "reportTargetType is required" }),
+            reportTargetId: z.string({ message: "reportTargetId is required" }),
+            reasonCategory: z.string({ message: "reasonCategory is required" }),
+            reasonDetails: z.string().optional(),
+         })
+         const data = validateQuery(query, req, res)
+
+         const result = await this.userReportService.reportUser(tokenPayload.userId, data.reportedUserId, data.reportTargetType, data.reportTargetId, data.reasonCategory, data.reasonDetails)
+         successResponse(res, ResCode.SUCCESS.message, { reportInfo: result })
+      } catch (error) {
+         handleError(res, error)
+      }
+   }
+}

@@ -6,9 +6,10 @@ import { handleSocketError, successSocketResponse } from "@utils/socket.response
 import { ResCode, ResError, WebSocketEvents } from "@type/response.types"
 import { z } from "zod"
 import { validateSocketData } from "@utils/request.validation.util"
+import LogService from "@services/log.service"
 
 export default class SocketRoomController {
-   constructor(private readonly roomService: SocketRoomService, private readonly connectionService: SocketConnectionService) {}
+   constructor(private readonly roomService: SocketRoomService, private readonly connectionService: SocketConnectionService, private readonly logService: LogService) {}
 
    /**
     * 방 생성
@@ -186,6 +187,8 @@ export default class SocketRoomController {
             throw new Error("Don't have roomCode")
          }
 
+         this.logService.addCallSessionLog(roomCode, socketUserInfo.userId, "LEAVE")
+
          // 방장인지 체크
          const isRoomOwner = await this.roomService.checkIsRoomOwner(socketUserInfo.userId, roomCode)
 
@@ -243,6 +246,8 @@ export default class SocketRoomController {
             name: WebSocketEvents.ROOM_NOTIFY_EXPEL,
             roomCode: reqData.roomCode,
          })
+
+         this.logService.addCallSessionLog(reqData.roomCode, targetUserInfo.userId, "LEAVE")
 
          // 룸 아웃 처리
          await this.roomService.leaveRoomByUserId(targetUserInfo.userId, reqData.roomCode)
@@ -311,6 +316,7 @@ export default class SocketRoomController {
       io.sockets.sockets.get(socketId)?.join(roomCode)
       this.roomService.joinRoom(roomCode, userId)
       this.roomService.updateRoomCodeToUserInfo(userId, roomCode)
+      this.logService.addCallSessionLog(roomCode, userId, "JOIN")
    }
 
    /**

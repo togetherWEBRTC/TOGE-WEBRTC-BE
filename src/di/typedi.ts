@@ -13,6 +13,12 @@ import SocketCallController from "@controllers/call.controller"
 import SocketCallService from "@/services/socket.call.service"
 import RoomController from "@controllers/room.controller"
 import SocialGoogleDatasource from "@/network/social.google.datasource"
+import UserReportRepository from "@repositorys/user.report.repository"
+import UserReportService from "@services/user.report.service"
+import UserReportController from "@controllers/user.report.controller"
+import LogRepository from "@repositorys/log.repository"
+import LogService from "@services/log.service"
+import LogController from "@controllers/log.controller"
 
 export const DependencyKeys = {
    AccountRepository: "AccountRepository",
@@ -30,6 +36,12 @@ export const DependencyKeys = {
    SocketCallController: "SocketCallController",
    SocketCallService: "SocketCallService",
    SocialGoogleDatasource: "SocialGoogleDatasource",
+   UserReportRepository: "UserReportRepository",
+   UserReportService: "UserReportService",
+   UserReportController: "UserReportController",
+   LogRepository: "LogRepository",
+   LogService: "LogService",
+   LogController: "LogController",
 }
 
 export default () => {
@@ -43,6 +55,13 @@ export default () => {
 
       const socketRepository = new SocketRepository()
       Container.set(DependencyKeys.SocketRepository, socketRepository)
+
+      const userReportRepository = new UserReportRepository()
+      Container.set(DependencyKeys.UserReportRepository, userReportRepository)
+
+      // LogRepository
+      const logRepository = new LogRepository()
+      Container.set(DependencyKeys.LogRepository, logRepository)
 
       // service
       const jwtTokenService = new JWTService()
@@ -60,6 +79,12 @@ export default () => {
       const socketCallService = new SocketCallService(socketRepository)
       Container.set(DependencyKeys.SocketCallService, socketCallService)
 
+      const userReportService = new UserReportService(userReportRepository)
+      Container.set(DependencyKeys.UserReportService, userReportService)
+
+      const logService = new LogService(logRepository)
+      Container.set(DependencyKeys.LogService, logService)
+
       // controller
       const authController = new AuthController(authService, jwtTokenService)
       Container.set(DependencyKeys.AuthController, authController)
@@ -70,7 +95,7 @@ export default () => {
       const socketConnectionController = new SocketConnectionController(socketConnectionService)
       Container.set(DependencyKeys.SocketConnectionController, socketConnectionController)
 
-      const socketRoomController = new SocketRoomController(socketRoomService, socketConnectionService)
+      const socketRoomController = new SocketRoomController(socketRoomService, socketConnectionService, logService)
       Container.set(DependencyKeys.SocketRoomController, socketRoomController)
 
       const signalController = new SignalController(socketConnectionService, socketRoomService)
@@ -78,6 +103,12 @@ export default () => {
 
       const socketCallController = new SocketCallController(socketConnectionService, socketRoomService, socketCallService)
       Container.set(DependencyKeys.SocketCallController, socketCallController)
+
+      const userReportController = new UserReportController(userReportService)
+      Container.set(DependencyKeys.UserReportController, userReportController)
+
+      const logController = new LogController(logService)
+      Container.set(DependencyKeys.LogController, logController)
    } catch (err) {
       console.error("⭐️ Error during dependency injection:", err)
    }
