@@ -1,0 +1,1 @@
+export type ReportTargetContentType = "CALL" | "CHAT" | "PROFILE"
