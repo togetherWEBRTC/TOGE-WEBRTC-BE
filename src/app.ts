@@ -9,6 +9,7 @@ import { createServer } from "http"
 import cors from "cors"
 import authRouter from "@routes/auth.route"
 import apiRoomRouter from "@routes/room.route"
+import apiReportRouter from "@routes/report.route"
 import { socketRouter } from "@routes/socket.main.route"
 import typedi from "@di/typedi"
 import path from "path"
@@ -75,6 +76,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))
 
 app.use("/api/auth", authRouter)
 app.use("/api/room", apiRoomRouter)
+app.use("/api/report", apiReportRouter)
 app.use(
    "/profile",
    express.static(path.join(__dirname, "public/profile"), {
