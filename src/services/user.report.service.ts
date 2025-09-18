@@ -1,9 +1,20 @@
 import { IUserReportRepository } from "@/repositorys/user.report.i.repository"
 import { BlockDto, ReportDto } from "@models/dto.report"
 import { ResError, ResCode } from "@type/response.types"
+import { BlockReason } from "@models/dao.block"
+import { ReportTargetContentType } from "@type/report.types"
 
 export default class UserReportService {
    constructor(private readonly userReportRepository: IUserReportRepository) {}
+
+   private mapReportTargetType(contentType: ReportTargetContentType): string {
+      const reportTargetTypeMapping = {
+         CALL: "CALL_SESSION",
+         CHAT: "CHAT_MESSAGE",
+         PROFILE: "USER_PROFILE",
+      } as const
+      return reportTargetTypeMapping[contentType]
+   }
 
    //사용자를 차단
    async blockUser(blockerUserId: string, blockedUserId: string, reason?: string, comment?: string): Promise<BlockDto> {
@@ -20,18 +31,30 @@ export default class UserReportService {
    }
 
    //사용자를 신고
-   async reportUser(reporterUserId: string, reportedUserId: string, reportTargetType: string, reportTargetId: string, reasonCategory: string, reasonDetails?: string): Promise<ReportDto> {
+   async reportUser(reporterUserId: string, reportedUserId: string, reportTargetContentType: ReportTargetContentType, reportTargetId: string, reasonCategory: string, reasonDetails?: string): Promise<ReportDto> {
       if (reporterUserId === reportedUserId) {
          throw new ResError({ code: ResCode.INVALID_PARAMS.code, message: "Cannot report yourself" })
       }
-      return this.userReportRepository.createReport({
+
+      const mappedTargetType = this.mapReportTargetType(reportTargetContentType)
+
+      const reportResult = await this.userReportRepository.createReport({
          reporterUserId,
          reportedUserId,
-         reportTargetType,
+         reportTargetType: mappedTargetType,
          reportTargetId,
          reasonCategory,
          reasonDetails,
       })
+
+      if (mappedTargetType === "CALL_SESSION") {
+         try {
+            await this.blockUser(reporterUserId, reportedUserId, BlockReason.BY_REPORT, `report id : ${reportResult.reportId} , ${reasonCategory}`)
+         } catch (error) {
+         }
+      }
+
+      return reportResult
    }
 
    //차단한 사용자 목록을 조회

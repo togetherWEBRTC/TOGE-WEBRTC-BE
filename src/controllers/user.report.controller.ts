@@ -71,14 +71,18 @@ export default class UserReportController {
 
          const query = z.object({
             reportedUserId: z.string({ message: "reportedUserId is required" }),
-            reportTargetType: z.string({ message: "reportTargetType is required" }),
-            reportTargetId: z.string({ message: "reportTargetId is required" }),
+            reportTargetContentType: z.enum(["CALL", "CHAT", "PROFILE"], {
+               message: "reportTargetType must be one of: CALL, CHAT, PROFILE",
+            }),
+            reportTargetContentId: z.string({ message: "reportTargetId is required" }), //room number / chat content
             reasonCategory: z.string({ message: "reasonCategory is required" }),
             reasonDetails: z.string().optional(),
          })
          const data = validateQuery(query, req, res)
 
-         const result = await this.userReportService.reportUser(tokenPayload.userId, data.reportedUserId, data.reportTargetType, data.reportTargetId, data.reasonCategory, data.reasonDetails)
+         const combinedTargetId = `${data.reportTargetContentType}-${data.reportTargetContentId}`
+
+         const result = await this.userReportService.reportUser(tokenPayload.userId, data.reportedUserId, data.reportTargetContentType, combinedTargetId, data.reasonCategory, data.reasonDetails)
          successResponse(res, ResCode.SUCCESS.message, { reportInfo: result })
       } catch (error) {
          handleError(res, error)

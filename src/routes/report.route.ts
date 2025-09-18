@@ -6,26 +6,26 @@ import { validateBearerAuthorization, verifyAccessToken } from "@middlewares/hea
 
 const router = Router()
 
-// POST /api/actions/block (사용자 차단)
+// POST /api/report/block (사용자 차단)
 router.post("/block", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
    const userReportController = Container.get<UserReportController>(DependencyKeys.UserReportController)
    return userReportController.blockUser(req, res)
 })
 
-// DELETE /api/actions/block (사용자 차단 해제)
+// DELETE /api/report/block (사용자 차단 해제)
 router.delete("/block", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
    const userReportController = Container.get<UserReportController>(DependencyKeys.UserReportController)
    return userReportController.unblockUser(req, res)
 })
 
-// GET /api/actions/blocks (차단 목록 조회)
+// GET /api/report/blocks (차단 목록 조회)
 router.get("/blocks", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
    const userReportController = Container.get<UserReportController>(DependencyKeys.UserReportController)
    return userReportController.getBlockedUsers(req, res)
 })
 
-// POST /api/actions/report (사용자 신고)
-router.post("/report", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
+// POST /api/report/user (사용자 신고)
+router.post("/user", validateBearerAuthorization, verifyAccessToken, async (req, res) => {
    const userReportController = Container.get<UserReportController>(DependencyKeys.UserReportController)
    return userReportController.reportUser(req, res)
 })
