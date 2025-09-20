@@ -9,11 +9,14 @@ import SocketConnectionController from "@controllers/socket.connection.controlle
 import SocketRoomController from "@controllers/socket.room.controller"
 import { signalRouter } from "@routes/signal.socket.route"
 import { callRouter } from "@routes/call.socket.route"
+import { socketGlobalEventRoute } from "@routes/socket.report.route"
 
 export const socketRouter = (io: Server) => {
    const tokenService = Container.get<JWTService>(DependencyKeys.JWTService)
    const connectionController = Container.get<SocketConnectionController>(DependencyKeys.SocketConnectionController)
    const roomController = Container.get<SocketRoomController>(DependencyKeys.SocketRoomController)
+
+   socketGlobalEventRoute(io)
 
    io.on(WebSocketEvents.CONNECT, async (socket) => {
       try {

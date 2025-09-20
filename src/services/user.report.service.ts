@@ -1,9 +1,7 @@
 import { IUserReportRepository } from "@/repositorys/user.report.i.repository"
 import { BlockDto, ReportDto } from "@models/dto.report"
 import { ResError, ResCode } from "@type/response.types"
-import { BlockReason } from "@models/dao.block"
 import { ReportTargetContentType } from "@type/report.types"
-
 export default class UserReportService {
    constructor(private readonly userReportRepository: IUserReportRepository) {}
 
@@ -21,13 +19,15 @@ export default class UserReportService {
       if (blockerUserId === blockedUserId) {
          throw new ResError({ code: ResCode.INVALID_PARAMS.code, message: "Cannot block yourself" })
       }
-      // TODO: 이미 차단한 유저인지 확인하는 로직 추가 가능
-      return this.userReportRepository.createBlock({
+
+      const blockResult = await this.userReportRepository.createBlock({
          blockerUserId,
          blockedUserId,
          reason,
          comment,
       })
+
+      return blockResult
    }
 
    //사용자를 신고
@@ -47,13 +47,6 @@ export default class UserReportService {
          reasonDetails,
       })
 
-      if (mappedTargetType === "CALL_SESSION") {
-         try {
-            await this.blockUser(reporterUserId, reportedUserId, BlockReason.BY_REPORT, `report id : ${reportResult.reportId} , ${reasonCategory}`)
-         } catch (error) {
-         }
-      }
-
       return reportResult
    }
 
@@ -68,6 +61,7 @@ export default class UserReportService {
       if (!isSuccess) {
          throw new ResError({ code: ResCode.DATA_ERROR.code, message: "Failed to unblock user or already unblocked." })
       }
+
       return true
    }
 }

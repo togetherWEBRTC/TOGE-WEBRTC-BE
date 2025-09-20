@@ -78,12 +78,16 @@ export const WebSocketEvents = {
    CALL_CHANGE_CAMERA: "call_change_camera", // 카메라 on/off
    CALL_NOTIFY_CHANGE_CAMERA: "call_notify_change_camera", // 카메라 on/off 알림
    CALL_NOTIFY_SCREEN_SHARE_OFF: "call_notify_screen_share_off", // 화면공유 종료 알림
+   CALL_CONTENTS_BLOCK: "call_contents_block", //컨텐츠 블락(보이지않도록함)
 
    CALL_CHANGE_HAND_RAISED: "call_change_hand_raised", // 손들기 on/off
    CALL_NOTIFY_CHANGE_HAND_RAISED: "call_notify_change_hand_raised", // 손들기 on/off 알림
 
    CHAT_SEND_CHAT_MESSAGE: "chat_send_message", // 채팅 메시지 전송
    CHAT_NOTIFY_CHAT_MESSAGE: "chat_notify_message", // 채팅 메시지 알림
+
+   // 차단 관련
+   USER_BLOCKED: "user_blocked",
 
    SOCKET_ERROR: "socket_error",
 }

@@ -19,6 +19,8 @@ import UserReportController from "@controllers/user.report.controller"
 import LogRepository from "@repositorys/log.repository"
 import LogService from "@services/log.service"
 import LogController from "@controllers/log.controller"
+import GlobalEventService from "@services/global.event.service"
+import SocketBlockController from "@controllers/socket.block.controller"
 
 export const DependencyKeys = {
    AccountRepository: "AccountRepository",
@@ -42,6 +44,8 @@ export const DependencyKeys = {
    LogRepository: "LogRepository",
    LogService: "LogService",
    LogController: "LogController",
+   GlobalEventService: "GlobalEventService",
+   SocketBlockController: "SocketBlockController",
 }
 
 export default () => {
@@ -85,6 +89,9 @@ export default () => {
       const logService = new LogService(logRepository)
       Container.set(DependencyKeys.LogService, logService)
 
+      const globalEventService = new GlobalEventService()
+      Container.set(DependencyKeys.GlobalEventService, globalEventService)
+
       // controller
       const authController = new AuthController(authService, jwtTokenService)
       Container.set(DependencyKeys.AuthController, authController)
@@ -104,11 +111,14 @@ export default () => {
       const socketCallController = new SocketCallController(socketConnectionService, socketRoomService, socketCallService)
       Container.set(DependencyKeys.SocketCallController, socketCallController)
 
-      const userReportController = new UserReportController(userReportService)
+      const userReportController = new UserReportController(userReportService, globalEventService)
       Container.set(DependencyKeys.UserReportController, userReportController)
 
       const logController = new LogController(logService)
       Container.set(DependencyKeys.LogController, logController)
+
+      const socketBlockController = new SocketBlockController(socketConnectionService)
+      Container.set(DependencyKeys.SocketBlockController, socketBlockController)
    } catch (err) {
       console.error("⭐️ Error during dependency injection:", err)
    }
