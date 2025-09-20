@@ -63,7 +63,6 @@ export default () => {
       const userReportRepository = new UserReportRepository()
       Container.set(DependencyKeys.UserReportRepository, userReportRepository)
 
-      // LogRepository
       const logRepository = new LogRepository()
       Container.set(DependencyKeys.LogRepository, logRepository)
 
@@ -102,7 +101,7 @@ export default () => {
       const socketConnectionController = new SocketConnectionController(socketConnectionService)
       Container.set(DependencyKeys.SocketConnectionController, socketConnectionController)
 
-      const socketRoomController = new SocketRoomController(socketRoomService, socketConnectionService, logService)
+      const socketRoomController = new SocketRoomController(socketRoomService, socketConnectionService, logService, userReportService)
       Container.set(DependencyKeys.SocketRoomController, socketRoomController)
 
       const signalController = new SignalController(socketConnectionService, socketRoomService)

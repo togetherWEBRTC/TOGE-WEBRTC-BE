@@ -3,6 +3,8 @@ import { BlockDAO, BlockReason } from "@models/dao.block"
 import { ReportDAO, ReportStatus, ReportTargetType } from "@models/dao.report"
 import { BlockDto, ReportDto } from "@models/dto.report"
 import { ResError, ResCode } from "@type/response.types"
+import { UserInteraction } from "@type/user.info.type"
+import { Op } from "sequelize"
 
 export default class UserReportRepository implements IUserReportRepository {
    constructor() {}
@@ -81,5 +83,49 @@ export default class UserReportRepository implements IUserReportRepository {
       })
 
       return deletedCount > 0
+   }
+
+   /**
+    * 특정 사용자와 참여자들 간의 차단 관계를 조회
+    * @param viewerUserId 조회하는 사용자 ID
+    * @param participantUserIds 참여자들의 사용자 ID 배열
+    * @returns Map<userId, UserInteraction> - 빠른 검색을 위한 Map 형태
+    */
+   public async getUserInteractionsWithParticipants(viewerUserId: string, participantUserIds: string[]): Promise<Map<string, UserInteraction>> {
+      const blockRelations = await BlockDAO.findAll({
+         where: {
+            [Op.or]: [
+               { blockerUserId: viewerUserId, blockedUserId: { [Op.in]: participantUserIds } }, // 내가 차단한 사람들
+               { blockerUserId: { [Op.in]: participantUserIds }, blockedUserId: viewerUserId }, // 나를 차단한 사람들
+            ],
+         },
+         attributes: ["blockerUserId", "blockedUserId"],
+      })
+
+      const resultMap = new Map<string, UserInteraction>()
+
+      // 모든 참여자를 'none' 상태로 초기화
+      participantUserIds.forEach((userId) => {
+         resultMap.set(userId, { targetUserId: userId, blockStatus: "none" })
+      })
+
+      // 차단 관계가 있는 경우만 상태 업데이트
+      blockRelations.forEach((block) => {
+         if (block.blockerUserId === viewerUserId) {
+            // 타겟유저가 상대방을 차단한 경우
+            const current = resultMap.get(block.blockedUserId)
+            if (current) {
+               current.blockStatus = current.blockStatus === "blocking_me" ? "mutual" : "blocked_by_me"
+            }
+         } else {
+            // 상대방이 타겟유저를 차단한 경우
+            const current = resultMap.get(block.blockerUserId)
+            if (current) {
+               current.blockStatus = current.blockStatus === "blocked_by_me" ? "mutual" : "blocking_me"
+            }
+         }
+      })
+
+      return resultMap
    }
 }

@@ -1,4 +1,4 @@
-import { UserInfo, SocketUserInfo, RoomParticipant } from "@type/user.info.type"
+import { UserInfo, RoomParticipant, UserInteraction, RoomUserInteraction } from "@type/user.info.type"
 import { Server, Socket } from "socket.io"
 import SocketRoomService from "@services/socket.room.service"
 import SocketConnectionService from "@services/socket.connection.service"
@@ -7,9 +7,10 @@ import { ResCode, ResError, WebSocketEvents } from "@type/response.types"
 import { z } from "zod"
 import { validateSocketData } from "@utils/request.validation.util"
 import LogService from "@services/log.service"
+import UserReportService from "@services/user.report.service"
 
 export default class SocketRoomController {
-   constructor(private readonly roomService: SocketRoomService, private readonly connectionService: SocketConnectionService, private readonly logService: LogService) {}
+   constructor(private readonly roomService: SocketRoomService, private readonly connectionService: SocketConnectionService, private readonly logService: LogService, private readonly userReportService: UserReportService) {}
 
    /**
     * 방 생성
@@ -276,15 +277,92 @@ export default class SocketRoomController {
     * @param changed 변경이 된 참여자 기본정보
     */
    private emitRoomNotifyUpdateParticipant = async (io: Server, roomCode: string, participants: RoomParticipant[], isJoined: boolean, changedUser: UserInfo) => {
-      // changedUser의 userId를 제외한 나머지 참여자들에게 변경된 참여자 리스트 전달
-      for (const participant of participants) {
-         if (participant.userId !== changedUser.userId) {
-            io.to(participant.socketId).emit(WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT, {
-               name: WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT,
-               participants: participants,
-               isJoined: isJoined,
-               changedUser: changedUser,
-            })
+      // 입장하는 경우에만 차단 관계 조회
+      if (isJoined) {
+         // 기존 참여자들의 ID 수집 (새 입장자 제외)
+         const existingParticipantIds = participants.filter((p) => p.userId !== changedUser.userId).map((p) => p.userId)
+
+         // 기존 참여자들과 새 입장자 간의 차단 관계를 한 번에 조회
+         const blockInteractionsMap = await this.userReportService.getUserInteractionsWithParticipants(
+            changedUser.userId, // 새 입장자 기준
+            existingParticipantIds
+         )
+
+         // 기존 참여자들에게만 새 입장자와의 차단 관계 정보 전달
+         for (const participant of participants) {
+            if (participant.userId !== changedUser.userId) {
+               // 해당 기존 참여자 관점에서 새 입장자와의 관계
+               const relationWithNewUser = blockInteractionsMap.get(participant.userId)
+
+               // UserInteraction을 RoomUserInteraction으로 변환
+               /**
+                *
+                  | blockStatus   | isContentBlocked | isShowBlockIndicator |
+                  |---------------|------------------|----------------------|
+                  | none          | false            | false                |
+                  | blocked_by_me | true             | true                 |
+                  | blocking_me   | true             | false                |
+                  | mutual        | true             | true                 |
+                * @returns 
+                */
+               const convertToRoomUserInteraction = (userInteraction: UserInteraction): RoomUserInteraction => {
+                  const { blockStatus } = userInteraction
+
+                  return {
+                     targetUserId: userInteraction.targetUserId,
+                     isContentBlocked: blockStatus !== "none", // 차단 관계가 있으면 콘텐츠 차단
+                     isShowBlockIndicator: blockStatus === "blocked_by_me" || blockStatus === "mutual", // 내가 차단한 경우만 인디케이터 표시
+                  }
+               }
+
+               let roomUserInteraction: RoomUserInteraction
+               if (relationWithNewUser) {
+                  // 관계 방향 뒤집기: 새 입장자 기준 → 기존 참여자 기준
+                  let reversedBlockStatus: "none" | "blocked_by_me" | "blocking_me" | "mutual" = "none"
+                  if (relationWithNewUser.blockStatus === "blocked_by_me") {
+                     reversedBlockStatus = "blocking_me" // 새입장자가 나를 차단 → 나를 차단하고 있음
+                  } else if (relationWithNewUser.blockStatus === "blocking_me") {
+                     reversedBlockStatus = "blocked_by_me" // 새입장자를 내가 차단 → 내가 차단함
+                  } else if (relationWithNewUser.blockStatus === "mutual") {
+                     reversedBlockStatus = "mutual" // 서로 차단
+                  }
+                  roomUserInteraction = convertToRoomUserInteraction({
+                     targetUserId: changedUser.userId,
+                     blockStatus: reversedBlockStatus,
+                  })
+               } else {
+                  roomUserInteraction = convertToRoomUserInteraction({
+                     targetUserId: changedUser.userId,
+                     blockStatus: "none",
+                  })
+               }
+
+               const emitData: any = {
+                  name: WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT,
+                  participants: participants,
+                  isJoined: isJoined,
+                  changedUser: changedUser,
+               }
+
+               // 차단 관계가 있는 경우에만 추가
+               if (roomUserInteraction.isContentBlocked || roomUserInteraction.isShowBlockIndicator) {
+                  emitData.joinedUserInteractionForMe = roomUserInteraction
+               }
+
+               io.to(participant.socketId).emit(WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT, emitData)
+            }
+         }
+      } else {
+         // 퇴장하는 경우는 기존 로직 (차단 관계 조회 없음)
+         for (const participant of participants) {
+            if (participant.userId !== changedUser.userId) {
+               io.to(participant.socketId).emit(WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT, {
+                  name: WebSocketEvents.ROOM_NOTIFY_UPDATE_PARTICIPANT,
+                  participants: participants,
+                  isJoined: isJoined,
+                  changedUser: changedUser,
+               })
+            }
          }
       }
    }

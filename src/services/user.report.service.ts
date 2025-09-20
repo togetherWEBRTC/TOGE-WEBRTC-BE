@@ -2,6 +2,7 @@ import { IUserReportRepository } from "@/repositorys/user.report.i.repository"
 import { BlockDto, ReportDto } from "@models/dto.report"
 import { ResError, ResCode } from "@type/response.types"
 import { ReportTargetContentType } from "@type/report.types"
+import { UserInteraction } from "@type/user.info.type"
 export default class UserReportService {
    constructor(private readonly userReportRepository: IUserReportRepository) {}
 
@@ -63,5 +64,10 @@ export default class UserReportService {
       }
 
       return true
+   }
+
+   //특정 사용자와 참여자들 간의 차단 관계 조회
+   async getUserInteractionsWithParticipants(viewerUserId: string, participantUserIds: string[]): Promise<Map<string, UserInteraction>> {
+      return this.userReportRepository.getUserInteractionsWithParticipants(viewerUserId, participantUserIds)
    }
 }
