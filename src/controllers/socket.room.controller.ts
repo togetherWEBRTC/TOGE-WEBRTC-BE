@@ -169,12 +169,39 @@ export default class SocketRoomController {
             roomMemberList = await this.roomService.getRoomMemberListWithoutMe(reqData.roomCode, myInfo.userId)
          }
 
-         callback(
-            successSocketResponse({
-               name: WebSocketEvents.ROOM_MEMBER_LIST,
-               roomMemberList: roomMemberList,
-            })
-         )
+         // 요청자와 다른 참여자들 간의 차단 관계 조회
+         const otherParticipantIds: string[] = []
+         for (const participant of roomMemberList) {
+            if (participant.userId !== myInfo.userId) {
+               otherParticipantIds.push(participant.userId)
+            }
+         }
+
+         let userInteractions: RoomUserInteraction[] = []
+         if (otherParticipantIds.length > 0) {
+            const blockInteractionsMap = await this.userReportService.getUserInteractionsWithParticipants(myInfo.userId, otherParticipantIds)
+
+            // UserInteraction을 RoomUserInteraction으로 변환
+            userInteractions = Array.from(blockInteractionsMap.values())
+               .filter((interaction) => interaction.blockStatus !== "none") // 차단 관계가 있는 경우만
+               .map((interaction) => ({
+                  targetUserId: interaction.targetUserId,
+                  isContentBlocked: interaction.blockStatus !== "none",
+                  isShowBlockIndicator: interaction.blockStatus === "blocked_by_me" || interaction.blockStatus === "mutual",
+               }))
+         }
+
+         const responseData: any = {
+            name: WebSocketEvents.ROOM_MEMBER_LIST,
+            roomMemberList: roomMemberList,
+         }
+
+         // 차단 관계가 있는 경우에만 추가
+         if (userInteractions.length > 0) {
+            responseData.userInteractions = userInteractions
+         }
+
+         callback(successSocketResponse(responseData))
       } catch (error: any) {
          callback(handleSocketError(error))
       }
@@ -279,8 +306,13 @@ export default class SocketRoomController {
    private emitRoomNotifyUpdateParticipant = async (io: Server, roomCode: string, participants: RoomParticipant[], isJoined: boolean, changedUser: UserInfo) => {
       // 입장하는 경우에만 차단 관계 조회
       if (isJoined) {
-         // 기존 참여자들의 ID 수집 (새 입장자 제외)
-         const existingParticipantIds = participants.filter((p) => p.userId !== changedUser.userId).map((p) => p.userId)
+         // 기존 참여자들의 ID 수집 (새 입장자 제외) - 한 번의 루프로 처리
+         const existingParticipantIds: string[] = []
+         for (const participant of participants) {
+            if (participant.userId !== changedUser.userId) {
+               existingParticipantIds.push(participant.userId)
+            }
+         }
 
          // 기존 참여자들과 새 입장자 간의 차단 관계를 한 번에 조회
          const blockInteractionsMap = await this.userReportService.getUserInteractionsWithParticipants(
