@@ -55,8 +55,20 @@ export default class SocketRoomController {
          const reqData = validateSocketData(schema, data)
          await this.checkRoomExists(io, reqData.roomCode)
 
-         // 웨이팅리스트에 유저 추가
+         // 참여 희망 유저 정보
          const userInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
+
+         // 방장이 해당 유저를 차단했는지 체크
+         const roomOwnerUserId = await this.roomService.getUserIdRoomOwner(reqData.roomCode)
+         const userInteractions = await this.userReportService.getUserInteractionsWithParticipants(roomOwnerUserId, [userInfo.userId])
+         const interaction = userInteractions.get(userInfo.userId)
+
+         if (interaction?.blockStatus === "blocked_by_me" || interaction?.blockStatus === "mutual") {
+            callback(successSocketResponse()) // 차단된 유저에게는 성공 응답을 주어 계속 대기하는 것처럼 보이게 함
+            return
+         }
+
+         // 웨이팅리스트에 유저 추가
          await this.roomService.addJoinRoomWaiting(reqData.roomCode, userInfo.userId)
          await this.roomService.updateWaitingRoomCodeToUserInfo(userInfo.userId, reqData.roomCode)
 
