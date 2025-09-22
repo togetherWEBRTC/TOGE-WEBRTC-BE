@@ -1,6 +1,7 @@
 import { IUserReportRepository } from "@/repositorys/user.report.i.repository"
 import { BlockDAO, BlockReason } from "@models/dao.block"
 import { ReportDAO, ReportStatus, ReportTargetType } from "@models/dao.report"
+import { InquiryDAO, InquiryStatus } from "@models/dao.inquiry"
 import { BlockDto, ReportDto } from "@models/dto.report"
 import { ResError, ResCode } from "@type/response.types"
 import { UserInteraction } from "@type/user.info.type"
@@ -127,5 +128,18 @@ export default class UserReportRepository implements IUserReportRepository {
       })
 
       return resultMap
+   }
+
+   public async createInquiry(userId: string | undefined, content: string, category: string): Promise<{ inquiryId: number }> {
+      const newInquiry = await InquiryDAO.create({
+         userId: userId,
+         content: content,
+         category: category,
+         status: InquiryStatus.PENDING,
+      } as any)
+
+      return {
+         inquiryId: newInquiry.inquiryId,
+      }
    }
 }

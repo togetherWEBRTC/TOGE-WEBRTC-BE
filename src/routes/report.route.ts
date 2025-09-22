@@ -30,4 +30,10 @@ router.post("/user", validateBearerAuthorization, verifyAccessToken, async (req,
    return userReportController.reportUser(req, res)
 })
 
+// POST /api/report/inquiry (문의 생성)
+router.post("/inquiry", async (req, res) => {
+   const userReportController = Container.get<UserReportController>(DependencyKeys.UserReportController)
+   return userReportController.createInquiry(req, res)
+})
+
 export default router

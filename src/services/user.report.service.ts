@@ -70,4 +70,14 @@ export default class UserReportService {
    async getUserInteractionsWithParticipants(viewerUserId: string, participantUserIds: string[]): Promise<Map<string, UserInteraction>> {
       return this.userReportRepository.getUserInteractionsWithParticipants(viewerUserId, participantUserIds)
    }
+
+   //문의 생성
+   async createInquiry(userId: string | undefined, content: string, category: string): Promise<number> {
+      if (!content || content.trim().length === 0) {
+         throw new ResError({ code: ResCode.INVALID_PARAMS.code, message: "Content is required" })
+      }
+
+      const result = await this.userReportRepository.createInquiry(userId, content, category)
+      return result.inquiryId // 문의 ID
+   }
 }

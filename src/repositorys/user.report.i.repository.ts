@@ -9,4 +9,5 @@ export interface IUserReportRepository {
    findBlockedUsersByUserId(userId: string): Promise<BlockDto[]>
    deleteBlock(blockerUserId: string, blockedUserId: string): Promise<boolean>
    getUserInteractionsWithParticipants(viewerUserId: string, participantUserIds: string[]): Promise<Map<string, UserInteraction>>
+   createInquiry(userId: string | undefined, content: string, category: string): Promise<{ inquiryId: number }>
 }

@@ -3,6 +3,7 @@ import { AccountDAO } from "@/models/dao.accounts"
 import { BlockDAO } from "@models/dao.block"
 import { ReportDAO } from "@models/dao.report"
 import { CallSessionLogDAO } from "@models/dao.call.session.log"
+import { InquiryDAO } from "@models/dao.inquiry"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -14,7 +15,7 @@ const sequelize = new Sequelize({
    username: process.env.MYSQL_USER,
    password: process.env.MYSQL_PASSWORD,
    database: process.env.MYSQL_DATABASE,
-   models: [AccountDAO, BlockDAO, ReportDAO, CallSessionLogDAO],
+   models: [AccountDAO, BlockDAO, ReportDAO, CallSessionLogDAO, InquiryDAO],
    logging: console.log,
 })
 

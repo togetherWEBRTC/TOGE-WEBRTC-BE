@@ -5,6 +5,7 @@ import { ResCode, ResError, WebSocketEvents } from "@type/response.types"
 import { validateQuery } from "@utils/request.validation.util"
 import { z } from "zod"
 import GlobalEventService from "@services/global.event.service"
+import { ReportReasonCategory } from "@type/report.types"
 
 export default class UserReportController {
    constructor(private readonly userReportService: UserReportService, private readonly globalEventService: GlobalEventService) {}
@@ -110,6 +111,25 @@ export default class UserReportController {
       } catch (error) {
          console.error("❌ Error blocking user:", error)
          throw error
+      }
+   }
+
+   public createInquiry = async (req: Request, res: Response): Promise<void> => {
+      try {
+         const query = z.object({
+            userId: z.string().optional(),
+            content: z.string({ message: "content is required" }),
+            category: z.enum(Object.values(ReportReasonCategory) as [string, ...string[]], {
+               message: "category must be one of: TECHNICAL, ACCOUNT, PAYMENT, BUG_REPORT, FEATURE_REQUEST, OTHER",
+            }),
+         })
+         const data = validateQuery(query, req, res)
+
+         const inquiryId = await this.userReportService.createInquiry(data.userId, data.content, data.category)
+
+         successResponse(res, ResCode.SUCCESS.message)
+      } catch (error) {
+         handleError(res, error)
       }
    }
 }
