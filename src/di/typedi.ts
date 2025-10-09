@@ -98,11 +98,11 @@ export default () => {
       const roomController = new RoomController(socketRoomService)
       Container.set(DependencyKeys.RoomController, roomController)
 
-      const socketConnectionController = new SocketConnectionController(socketConnectionService)
-      Container.set(DependencyKeys.SocketConnectionController, socketConnectionController)
-
       const socketRoomController = new SocketRoomController(socketRoomService, socketConnectionService, logService, userReportService)
       Container.set(DependencyKeys.SocketRoomController, socketRoomController)
+
+      const socketConnectionController = new SocketConnectionController(socketConnectionService, socketRoomController)
+      Container.set(DependencyKeys.SocketConnectionController, socketConnectionController)
 
       const signalController = new SignalController(socketConnectionService, socketRoomService)
       Container.set(DependencyKeys.SignalController, signalController)

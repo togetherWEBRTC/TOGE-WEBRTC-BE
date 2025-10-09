@@ -127,6 +127,15 @@ export default class SocketRoomController {
          const roomOwnerSocketId = await this.roomService.getRoomOwnerSocketId(reqData.roomCode)
          await this.checkIsRoomOwner(socket.id, roomOwnerSocketId)
 
+         // 대상 유저의 소켓이 실제로 연결되어 있는지 확인
+         const targetSocket = io.sockets.sockets.get(targetUserInfo.socketId)
+         if (!targetSocket) {
+            throw new ResError({
+               code: ResCode.USER_NOT_CONNECTED.code,
+               message: ResCode.USER_NOT_CONNECTED.message,
+            })
+         }
+
          // 대기자 리스트에서 제거
          await this.roomService.removeUserIdInWaitingRoomList(reqData.roomCode, targetUserInfo.userId)
          await this.roomService.removeWaitingRoomCodeToUserInfo(targetUserInfo.userId)
@@ -304,6 +313,80 @@ export default class SocketRoomController {
          callback(successSocketResponse())
       } catch (error: any) {
          callback(handleSocketError(error))
+      }
+   }
+
+   /**
+    * userId 기반 룸 참여 대기 취소
+    */
+   public cancelJoinRoomByUserId = async (io: Server, userId: string, name: string, profileUrl: string) => {
+      try {
+         const socketUserInfo = await this.connectionService.getSocketUserInfoByUserId(userId)
+         if (!socketUserInfo || !socketUserInfo.roomWaitingCode) {
+            return
+         }
+
+         const roomCode = socketUserInfo.roomWaitingCode
+         const roomOwnerSocketId = await this.roomService.getRoomOwnerSocketId(roomCode)
+
+         // 대기자 리스트에서 제거
+         await this.roomService.removeUserIdInWaitingRoomList(roomCode, userId)
+         await this.roomService.removeWaitingRoomCodeToUserInfo(userId)
+
+         const waitingList = await this.roomService.getRoomRequestJoinWaitingList(roomCode)
+
+         // 방장에게 갱신 된 웨이팅 리스트 전달
+         await this.emitRoomNotifyWaitToRoomOwner(io, roomOwnerSocketId, waitingList, false, {
+            userId: userId,
+            name: name,
+            profileUrl: profileUrl,
+         })
+      } catch (error: any) {
+         console.error(`❌ cancelJoinRoomByUserId 에러:`, error)
+      }
+   }
+
+   /**
+    * 소켓이 없는 상태에서 userId로 룸에서 나가기 처리
+    * @param io
+    * @param userId
+    * @param userInfo
+    */
+   public leaveRoomByUserId = async (io: Server, userId: string, name: string, profileUrl: string) => {
+      try {
+         const socketUserInfo = await this.connectionService.getSocketUserInfoByUserId(userId)
+         if (!socketUserInfo || !socketUserInfo.roomCode) {
+            return
+         }
+
+         const roomCode = socketUserInfo.roomCode
+
+         this.logService.addCallSessionLog(roomCode, userId, "LEAVE")
+
+         // 방장인지 체크
+         const isRoomOwner = await this.roomService.checkIsRoomOwner(userId, roomCode)
+
+         // 방에 남아있는 인원에게 변경된 참여자 리스트 전달
+         const roomMemberList = await this.roomService.getRoomMemberList(roomCode)
+         await this.emitRoomNotifyUpdateParticipant(io, roomCode, roomMemberList, false, {
+            userId: userId,
+            name: name,
+            profileUrl: profileUrl,
+         })
+
+         // 방장인 경우 다음 유저에게 방장 알림
+         if (isRoomOwner && roomMemberList.length > 0) {
+            const nextOwnerSocketId = await this.roomService.getRoomOwnerSocketId(roomCode)
+            io.to(nextOwnerSocketId).emit(WebSocketEvents.ROOM_NOTIFY_UPDATE_OWNER, {
+               name: WebSocketEvents.ROOM_NOTIFY_UPDATE_OWNER,
+               userId: roomMemberList[0].userId,
+            })
+         }
+
+         // 룸에서 사용자 제거
+         await this.roomService.leaveRoomByUserId(userId, roomCode)
+      } catch (error: any) {
+         console.error(`❌ leaveRoomByUserId 에러:`, error)
       }
    }
 
