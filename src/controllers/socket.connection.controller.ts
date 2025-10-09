@@ -389,6 +389,12 @@ export default class SocketConnectionController {
       try {
          const socketUserInfo = await this.connectionService.getSocketUserInfoBySocketId(socket.id)
 
+         // sessionId가 없으면 재접속 처리 불필요 (레거시용)
+         if (!socketUserInfo.sessionId || socketUserInfo.sessionId === "") {
+            await this.connectionService.deleteSocketUserInfo(socket.id)
+            return
+         }
+
          if (socketUserInfo.socketId === socket.id) {
             // 45초 대기 등록
             await this.connectionService.addWaitingDisconnectUser(socketUserInfo.userId, socketUserInfo)
