@@ -28,7 +28,7 @@ services:
          - redis_data:/data
       networks:
          - app_network
-      command: redis-server --requirepass ${REDIS_PASSWORD}
+      command: redis-server --requirepass ${REDIS_PASSWORD} --notify-keyspace-events Ex
 
    phpmyadmin:
       image: phpmyadmin:latest
