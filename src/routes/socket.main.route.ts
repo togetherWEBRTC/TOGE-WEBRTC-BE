@@ -62,14 +62,6 @@ export const socketRouter = (io: Server) => {
          await connectionController.handleDisconnect(io, socket, reason)
       })
 
-      socket.conn.on("packet", (packet: Packet) => {
-         // packet.type: "open" | "close" | "ping" | "pong" | "message" | "upgrade" | "noop"
-         // packet.data: any
-         console.log("--------- ", socket.id, " --------")
-         console.log("packet:", packet.type, packet.data)
-         socket.lastSeen = Date.now()
-      })
-
       roomRouter(io, socket)
       signalRouter(io, socket)
       callRouter(io, socket)
