@@ -24,4 +24,9 @@ export interface ISocketRepository {
    updateMicrophoneState(userId: string, isMicrophoneOn: boolean): Promise<void>
    updateCameraState(userId: string, isCameraOn: boolean): Promise<void>
    updateHandRaisedState(userId: string, isHandRaised: boolean): Promise<void>
+
+   // 대기 연결 해제 관련 메서드들
+   setWaitingDisconnectUser(userId: string, waitingData: any, ttlSeconds: number): Promise<void>
+   getWaitingDisconnectUser(userId: string): Promise<any>
+   deleteWaitingDisconnectUser(userId: string): Promise<void>
 }

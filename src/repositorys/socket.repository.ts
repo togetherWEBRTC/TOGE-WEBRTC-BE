@@ -185,4 +185,21 @@ export default class SocketRepository implements ISocketRepository {
       const userKey = this.SOCKET_ID_PREFIX + userInfo.userId
       await this.redisClient.multi().set(userKey, JSON.stringify(userInfo)).expire(userKey, this.SOCKET_EXPIRE_TIME).exec()
    }
+
+   // 대기 연결 해제 관련 메서드들
+   public setWaitingDisconnectUser = async (userId: string, waitingData: any, ttlSeconds: number): Promise<void> => {
+      const waitingKey = `waiting_disconnect:${userId}`
+      await this.redisClient.multi().set(waitingKey, JSON.stringify(waitingData)).expire(waitingKey, ttlSeconds).exec()
+   }
+
+   public getWaitingDisconnectUser = async (userId: string): Promise<any> => {
+      const waitingKey = `waiting_disconnect:${userId}`
+      const data = await this.redisClient.get(waitingKey)
+      return data ? JSON.parse(data) : null
+   }
+
+   public deleteWaitingDisconnectUser = async (userId: string): Promise<void> => {
+      const waitingKey = `waiting_disconnect:${userId}`
+      await this.redisClient.del(waitingKey)
+   }
 }
