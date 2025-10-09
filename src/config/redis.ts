@@ -1,5 +1,6 @@
 import { createClient } from "@redis/client"
 import dotenv from "dotenv"
+import { initRedisKeyspaceSubscriber } from "@config/redis.keyspace.subscriber"
 
 export const redisConfig = {
    host: process.env.REDIS_HOST || "localhost",
@@ -20,6 +21,7 @@ export const createRedisClient = () => {
 }
 
 let redisClient: ReturnType<typeof createClient> | null = null
+let redisSubscriberClient: ReturnType<typeof createClient> | null = null
 
 export const getRedisClient = () => {
    if (!redisClient) {
@@ -28,10 +30,25 @@ export const getRedisClient = () => {
    return redisClient
 }
 
+export const getRedisSubscriberClient = () => {
+   if (!redisSubscriberClient) {
+      throw new Error("Redis subscriber client not initialized")
+   }
+   return redisSubscriberClient
+}
+
 export const initRedis = async () => {
    dotenv.config()
+
    redisClient = createRedisClient()
    await redisClient.connect()
-   console.log("Redis connected successfully")
-   return redisClient
+   console.log("Redis main client connected successfully")
+
+   redisSubscriberClient = createRedisClient()
+   await redisSubscriberClient.connect()
+   console.log("Redis subscriber client connected successfully")
+
+   await initRedisKeyspaceSubscriber()
+
+   return { redisClient, redisSubscriberClient }
 }
