@@ -23,6 +23,7 @@ export const ResCode = {
    NEED_TO_AGREED_TERMS: { code: 1011, message: "need to agree terms" },
    FAIL_WITHDRAW_MEMBER: { code: 1012, message: "failed withdraw member" },
    FAIL_MODIFY_NICKNAME: { code: 1013, message: "failed modify nickname" },
+   FAIL_DUPLICATE_CONNECTION: { code: 1014, message: "failed duplicate connection" },
 
    // SOCKET ROOM
    ALREADY_JOINED_ROOM: { code: 10001, message: "already joined room" },
@@ -30,6 +31,7 @@ export const ResCode = {
    NOT_ROOM_OWNER: { code: 10003, message: "not room owner" },
    NOT_ROOM_MEMBER: { code: 10004, message: "not room member" },
    ALREADY_EXISTED_ROOM: { code: 10006, message: "already existed room" },
+   USER_NOT_CONNECTED: { code: 10007, message: "user not connected" },
 
    // SOCKET CALL
    REQUESTED_SAME_STATE: { code: 10005, message: "requested same state" },
@@ -38,6 +40,7 @@ export const ResCode = {
 export const WebSocketEvents = {
    CONNECT: "connection",
    DISCONNECT: "disconnect",
+   CHECK_CONNECTION: "check_connection",
 
    AUTH_ERROR: "auth_error",
 
@@ -86,8 +89,12 @@ export const WebSocketEvents = {
    CHAT_SEND_CHAT_MESSAGE: "chat_send_message", // 채팅 메시지 전송
    CHAT_NOTIFY_CHAT_MESSAGE: "chat_notify_message", // 채팅 메시지 알림
 
-   // 차단 관련
-   USER_BLOCKED: "user_blocked",
+   USER_BLOCKED: "user_blocked", // 차단 관련
+   DUPLICATE_CONNECTION_CHOICE: "duplicate_connection_choice", // 중복연결 선택여부
+   FORCE_LOGOUT_BY_DUPLICATE_CONNECTION: "force_logout_by_duplicate_connection", // 중복연결로 인한 강제 로그아웃 알림
+
+   // Redis 키 만료
+   KEY_EXPIRED: "key_expired",
 
    SOCKET_ERROR: "socket_error",
 }
