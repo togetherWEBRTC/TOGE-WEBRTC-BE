@@ -47,7 +47,6 @@ socketServer.listen(SOCKET_PORT, () => {
 })
 
 const initializeSocketIO = async () => {
-   await initRedis()
    const io = new Server(socketServer, {
       cors: {
          origin: "*",
