@@ -24,7 +24,7 @@ export default class SocketCallService {
    }
 
    //손든 유저만 리스트로 가져오기
-   public getHandRaisedUserList = async (roomCode: string): Promise<SocketUserInfo[]> => {
+   public getHandRaisedUserList = async (roomCode: string): Promise<RoomParticipant[]> => {
       const userList = await this.socketRepository.getRoomMembers(roomCode)
       return userList.filter((user) => user.isHandRaised)
    }
